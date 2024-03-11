@@ -75,7 +75,7 @@ func (pl *Plugin) Reserve(ctx context.Context, state *framework.CycleState, p *v
 func (pl *Plugin) Unreserve(ctx context.Context, state *framework.CycleState, p *v1.Pod, nodeName string) {
 }
 
-const waitDuration = 30 * time.Second
+const waitDuration = 90 * time.Second
 
 func (pl *Plugin) PreBind(ctx context.Context, state *framework.CycleState, p *v1.Pod, nodeName string) *framework.Status {
 	ctx, cancel := context.WithTimeout(ctx, waitDuration)
