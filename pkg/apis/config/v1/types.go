@@ -27,6 +27,10 @@ type ProxyArgs struct {
 	// FilterWaitDurationSeconds specifies how long the filter extension point waits for a terminal
 	// signal (reserved or unscheduled) from the pod chaperon
 	FilterWaitDurationSeconds *int32 `json:"filterWaitDurationSeconds,omitempty"`
+
+	// LabelKeysToSkipPrefixing specifies the label keys that will be copied as-is alongside their values
+	// to the delegate pods. Those label keys won't get the multicluster prefix added to them
+	LabelKeysToSkipPrefixing []string `json:"labelKeysToSkipPrefixing,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

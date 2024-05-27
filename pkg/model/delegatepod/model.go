@@ -32,7 +32,7 @@ func IsDelegate(pod *corev1.Pod) bool {
 	return pod.Spec.SchedulerName == common.CandidateSchedulerName
 }
 
-func MakeDelegatePod(proxyPod *corev1.Pod, clusterName string) (*v1alpha1.PodChaperon, error) {
+func MakeDelegatePod(proxyPod *corev1.Pod, labelKeysToSkipPrefixing []string, clusterName string) (*v1alpha1.PodChaperon, error) {
 	srcPod, err := proxypod.GetSourcePod(proxyPod)
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func MakeDelegatePod(proxyPod *corev1.Pod, clusterName string) (*v1alpha1.PodCha
 		}
 	}
 
-	labels, _ := ChangeLabels(srcPod.Labels)
+	labels, _ := ChangeLabels(srcPod.Labels, labelKeysToSkipPrefixing)
 
 	delegatePod := &v1alpha1.PodChaperon{
 		ObjectMeta: metav1.ObjectMeta{
@@ -90,10 +90,21 @@ func MakeDelegatePod(proxyPod *corev1.Pod, clusterName string) (*v1alpha1.PodCha
 // The name segment is required and must be 63 characters or less"
 // https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#syntax-and-character-set
 // TODO: resolve conflict two keys have same name but different prefixes
-func ChangeLabels(labels map[string]string) (map[string]string, bool) {
+func ChangeLabels(labels map[string]string, labelKeysToSkipPrefixing []string) (map[string]string, bool) {
+	keysToSkip := map[string]string{}
+	for _, l := range labelKeysToSkipPrefixing {
+		if l != common.KeyPrefix {
+			keysToSkip[l] = ""
+		}
+	}
 	changed := false
 	newLabels := make(map[string]string)
 	for k, v := range labels {
+		// add the label keys to the delegate pod without the multicluster prefix
+		if _, ok := keysToSkip[k]; ok {
+			newLabels[k] = v
+			continue
+		}
 		keySplit := strings.Split(k, "/") // note: assume no empty key (enforced by Kubernetes)
 		if len(keySplit) == 1 || keySplit[0] != common.KeyPrefix {
 			changed = true

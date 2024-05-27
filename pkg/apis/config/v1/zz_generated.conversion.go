@@ -22,6 +22,8 @@
 package v1
 
 import (
+	unsafe "unsafe"
+
 	config "admiralty.io/multicluster-scheduler/pkg/apis/config"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	conversion "k8s.io/apimachinery/pkg/conversion"
@@ -86,6 +88,7 @@ func autoConvert_v1_ProxyArgs_To_config_ProxyArgs(in *ProxyArgs, out *config.Pro
 	if err := metav1.Convert_Pointer_int32_To_int32(&in.FilterWaitDurationSeconds, &out.FilterWaitDurationSeconds, s); err != nil {
 		return err
 	}
+	out.LabelKeysToSkipPrefixing = *(*[]string)(unsafe.Pointer(&in.LabelKeysToSkipPrefixing))
 	return nil
 }
 
@@ -98,6 +101,7 @@ func autoConvert_config_ProxyArgs_To_v1_ProxyArgs(in *config.ProxyArgs, out *Pro
 	if err := metav1.Convert_int32_To_Pointer_int32(&in.FilterWaitDurationSeconds, &out.FilterWaitDurationSeconds, s); err != nil {
 		return err
 	}
+	out.LabelKeysToSkipPrefixing = *(*[]string)(unsafe.Pointer(&in.LabelKeysToSkipPrefixing))
 	return nil
 }
 

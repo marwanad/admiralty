@@ -46,7 +46,8 @@ type Plugin struct {
 	targets          map[string]*versioned.Clientset
 	targetNamespaces map[string]string
 
-	filterWaitDuration time.Duration
+	filterWaitDuration       time.Duration
+	labelKeysToSkipPrefixing []string
 
 	failedNodeNamesByPodUID map[types.UID]map[string]bool
 	mx                      sync.RWMutex
@@ -132,7 +133,7 @@ func (pl *Plugin) Filter(ctx context.Context, state *framework.CycleState, pod *
 		}
 		// create candidate if not exists
 		if c == nil {
-			c, err := delegatepod.MakeDelegatePod(pod, pl.clusterName)
+			c, err := delegatepod.MakeDelegatePod(pod, pl.labelKeysToSkipPrefixing, pl.clusterName)
 			if err != nil {
 				return false, err
 			}
@@ -189,7 +190,7 @@ func (pl *Plugin) Reserve(ctx context.Context, state *framework.CycleState, p *v
 	}
 	if c == nil {
 		if _, ok := p.Annotations[common.AnnotationKeyNoReservation]; ok {
-			c, err := delegatepod.MakeDelegatePod(p, pl.clusterName)
+			c, err := delegatepod.MakeDelegatePod(p, pl.labelKeysToSkipPrefixing, pl.clusterName)
 			if err != nil {
 				return framework.NewStatus(framework.Error, err.Error())
 			}
@@ -307,11 +308,12 @@ func New(obj runtime.Object, h framework.Handle) (framework.Plugin, error) {
 	// TODO... cache podchaperons with lister
 
 	return &Plugin{
-		handle:                  h,
-		clusterName:             os.Getenv("CLUSTER_NAME"),
-		targets:                 targets,
-		targetNamespaces:        targetNamespaces,
-		filterWaitDuration:      time.Duration(args.FilterWaitDurationSeconds) * time.Second,
-		failedNodeNamesByPodUID: map[types.UID]map[string]bool{},
+		handle:                   h,
+		clusterName:              os.Getenv("CLUSTER_NAME"),
+		targets:                  targets,
+		targetNamespaces:         targetNamespaces,
+		filterWaitDuration:       time.Duration(args.FilterWaitDurationSeconds) * time.Second,
+		labelKeysToSkipPrefixing: args.LabelKeysToSkipPrefixing,
+		failedNodeNamesByPodUID:  map[types.UID]map[string]bool{},
 	}, nil
 }

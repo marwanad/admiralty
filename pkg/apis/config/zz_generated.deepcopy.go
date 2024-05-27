@@ -54,6 +54,11 @@ func (in *CandidateArgs) DeepCopyObject() runtime.Object {
 func (in *ProxyArgs) DeepCopyInto(out *ProxyArgs) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
+	if in.LabelKeysToSkipPrefixing != nil {
+		in, out := &in.LabelKeysToSkipPrefixing, &out.LabelKeysToSkipPrefixing
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 

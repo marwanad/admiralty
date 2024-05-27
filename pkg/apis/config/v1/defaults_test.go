@@ -19,15 +19,18 @@ func TestPluginDefaults(t *testing.T) {
 			config: &ProxyArgs{},
 			expected: &ProxyArgs{
 				FilterWaitDurationSeconds: pointer.Int32(30),
+				LabelKeysToSkipPrefixing:  nil,
 			},
 		},
 		{
 			name: "non-default ProxyArgs",
 			config: &ProxyArgs{
 				FilterWaitDurationSeconds: pointer.Int32(60),
+				LabelKeysToSkipPrefixing:  []string{"foo.com/bar", "foo.com/baz"},
 			},
 			expected: &ProxyArgs{
 				FilterWaitDurationSeconds: pointer.Int32(60),
+				LabelKeysToSkipPrefixing:  []string{"foo.com/bar", "foo.com/baz"},
 			},
 		},
 		{

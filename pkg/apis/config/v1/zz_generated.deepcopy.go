@@ -64,6 +64,11 @@ func (in *ProxyArgs) DeepCopyInto(out *ProxyArgs) {
 		*out = new(int32)
 		**out = **in
 	}
+	if in.LabelKeysToSkipPrefixing != nil {
+		in, out := &in.LabelKeysToSkipPrefixing, &out.LabelKeysToSkipPrefixing
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 
