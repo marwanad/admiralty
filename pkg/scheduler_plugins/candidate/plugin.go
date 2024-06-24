@@ -113,7 +113,7 @@ func (pl *Plugin) isAllowed(ctx context.Context, p *v1.Pod) (bool, error) {
 }
 
 // New initializes a new plugin and returns it.
-func New(obj runtime.Object, h framework.Handle) (framework.Plugin, error) {
+func New(ctx context.Context, obj runtime.Object, h framework.Handle) (framework.Plugin, error) {
 	args, ok := obj.(*config.CandidateArgs)
 	if !ok {
 		return nil, fmt.Errorf("expected args to be of type ProxyArgs, got %T", obj)
