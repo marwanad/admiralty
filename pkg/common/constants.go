@@ -40,6 +40,8 @@ var (
 
 	AnnotationKeyUseConstraintsFromSpecForProxyPodScheduling = KeyPrefix + "use-constraints-from-spec-for-proxy-pod-scheduling"
 
+	AnnotationKeyDelegateLabelKeysToSkipPrefixing = KeyPrefix + "label-keys-to-skip-prefixing"
+
 	// annotations on proxy pods (by mutating admission webhook)
 
 	KeyPrefixSourcePod = KeyPrefix + "sourcepod-"
