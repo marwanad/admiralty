@@ -135,20 +135,23 @@ func (pl *Plugin) Filter(ctx context.Context, state *framework.CycleState, pod *
 			if err != nil {
 				return false, err
 			}
-
-			_, err = pl.targets[targetClusterName].MulticlusterV1alpha1().PodChaperons(c.Namespace).Create(ctx, c, metav1.CreateOptions{})
+			pc, err := pl.targets[targetClusterName].MulticlusterV1alpha1().PodChaperons(c.Namespace).Create(ctx, c, metav1.CreateOptions{})
 			if err != nil {
 				// may be forbidden, or namespace doesn't exist, or target cluster is unavailable
 				// handled below as unschedulable
 				return false, err
 			}
-
+			klog.V(3).Infof("created pod chaperon %s in target cluster %s", pc.Name, targetClusterName)
 			return false, nil
 		}
 		_, isReserved = c.Annotations[common.AnnotationKeyIsReserved]
-
+		if len(c.Status.Conditions) == 0 {
+			klog.V(3).Infof("got empty conditions for delegate pod %s in cluster %s", c.Name, targetClusterName)
+			isUnschedulable = true
+		}
 		for _, cond := range c.Status.Conditions {
-			if cond.Type == v1.PodScheduled && cond.Status == v1.ConditionFalse && cond.Reason == v1.PodReasonUnschedulable {
+			if cond.Type == v1.PodScheduled && cond.Status == v1.ConditionFalse && (cond.Reason == v1.PodReasonUnschedulable || cond.Reason == v1.PodReasonSchedulingGated) {
+				klog.V(3).Infof("got pod conditions as %+v", c.Status.Conditions)
 				isUnschedulable = true
 				break
 			}
@@ -261,7 +264,7 @@ func (pl *Plugin) candidateIsBound(ctx context.Context, p *v1.Pod, targetCluster
 				return true, nil
 			} else { // binding failed
 				klog.V(3).Infof("candidate %s failed to bound", p.Name)
-				return false, nil
+				return false, fmt.Errorf("candidate binding failed")
 			}
 		}
 	}
