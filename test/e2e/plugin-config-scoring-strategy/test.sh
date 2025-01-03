@@ -24,14 +24,17 @@ plugin-config-scoring-strategy_test() {
   j=$2
   k $j label node --all a=b --overwrite
 
-  # Find the node with the highest CPU utilization
-  nodes=$(k $j get nodes -o name | sed s/"node\/"//)
+  k $i apply -f test/e2e/plugin-config-scoring-strategy/init-workload.yaml
+  k $i wait pod init-workload --for=condition=PodScheduled
+
+  # Find the worker node with the highest CPU utilization
+  nodes=$(k $j get nodes -l '!node-role.kubernetes.io/control-plane' -o name | sed s/"node\/"//)
   most_allocated=""
-  most_cpu_requests="0"
+  most_cpu_requests=0
   for node in $nodes; do
       cpu_requests=$(k $j describe node "$node" | grep -A5 "Allocated" | awk '{print $3}' | sed -n '5p' | tr -d '()%')
-      echo "node: $node, cpu requests: $cpu_requests"
-      if [[ "$cpu_requests" -ge "$most_cpu_requests" ]]
+      echo "node: $node, cpu allocated: $cpu_requests%"
+      if [[ $cpu_requests -ge $most_cpu_requests ]]
       then
         most_cpu_requests=$cpu_requests
         most_allocated=$node
@@ -41,8 +44,8 @@ plugin-config-scoring-strategy_test() {
   k $i apply -f test/e2e/plugin-config-scoring-strategy/test.yaml
   k $i wait pod test-scoring-strategy --for=condition=PodScheduled
 
-  node_scheduled="$(k $j get pod -o json | jq -er '.items[0].spec.nodeName')"
-  k $i delete -f test/e2e/plugin-config-scoring-strategy/test.yaml
+  node_scheduled="$(k $j get pod -l multicluster.admiralty.io/app=test-scoring-strategy -o json | jq -er '.items[0].spec.nodeName')"
+  k $i delete -f test/e2e/plugin-config-scoring-strategy/test.yaml,test/e2e/plugin-config-scoring-strategy/init-workload.yaml
   k $j label node --all a-
   if [ "$node_scheduled" != "$most_allocated" ]
   then
